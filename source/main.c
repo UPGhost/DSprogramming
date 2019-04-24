@@ -5,13 +5,46 @@
 #define WIDTH 256
 #define HEIGHT 192
 
-#include "Touch_The_Screen_Pcx.h"
+#include "Touch_The_Screen_pcx.h"
+#include "Test32by32_pcx.h"
+#include "ball_pcx.h"
+
 
 typedef struct {
-	int x,y;			// screen co-ordinates	
+	int x;
+	int y;			// screen co-ordinates
+	int dx; 
+	int dy;			// velocity
 	SpriteEntry* oam;	// pointer to the sprite attributes in OAM
 	int gfxID; 			// graphics lovation	
-}Text;
+}Sprite;
+
+typedef struct  
+{
+   u16* gfx;
+   SpriteSize size;
+   SpriteColorFormat format;
+   int rotationIndex;
+   int paletteAlpha;
+   int x;
+   int y;
+}MySprite;
+
+	SpriteEntry OAMCopySub[128];
+
+//Initialise Variables
+	
+	//Background
+	int i = 0;
+	int delta = 0;
+	
+	int ix = 0;
+	int iy = 0;	
+	
+	uint16* map0 = (uint16*)SCREEN_BASE_BLOCK_SUB(1);
+	uint16* map1 = (uint16*)SCREEN_BASE_BLOCK_SUB(2);
+	
+		
 
 void ScreenSetUp(void)
 {
@@ -26,35 +59,73 @@ void ScreenSetUp(void)
 					DISPLAY_BG1_ACTIVE );
 }
 
+//OAM
+
+//---------------------------------------------------------------------------------
+void initOAM(void) {
+//---------------------------------------------------------------------------------	
+	for(i = 0; i < 128; i++) {
+		OAMCopySub[i].attribute[0] = ATTR0_DISABLED;
+	}
+}
+
+//---------------------------------------------------------------------------------
+void updateOAM(void) {
+//---------------------------------------------------------------------------------
+	memcpy(OAM_SUB, OAMCopySub, 128 * sizeof(SpriteEntry));
+}
 
 
-int main(void) 
+//Sprites
+
+//---------------------------------------------------------------------------------
+void MoveSprite(Sprite* sp) {
+//---------------------------------------------------------------------------------
+	/*
+	int x = sp->x >> 8;
+	int y = sp->y >> 8;
+
+	sp->oam->x = x;
+	sp->oam->y = y;
+	*/
+	
+	sp->oam->x = sp->x;
+	sp->oam->y = sp->y;
+
+}
+
+void TouchTheScreenText()
 {
+	sImage TouchTheScreenSprite;
 
-//Initial Functions
+	//load pcx file into an image
+	loadPCX((u8*)Test32by32_pcx, &TouchTheScreenSprite);
 
-	ScreenSetUp();	
-	consoleDemoInit(); 
+	//tile it so it is usefull as sprite data
+	imageTileData(&TouchTheScreenSprite);
 	
-//Initialise Variables
+	// Sprite initialisation
+	for(i = 0; i < 256; i++)
+		SPRITE_PALETTE_SUB[i] = TouchTheScreenSprite.palette[i];
+
+	for(i = 0; i< 32*16; i++)
+		SPRITE_GFX_SUB[i] = TouchTheScreenSprite.image.data16[i];	
+}
+
+void SpriteAdd()
+{
+	TouchTheScreenText();
 	
-	//Background
-	int i = 0;
-	int delta = 0;
-	
-	int ix = 0;
-	int iy = 0;	
-	
-	uint16* map0 = (uint16*)SCREEN_BASE_BLOCK_SUB(1);
-	uint16* map1 = (uint16*)SCREEN_BASE_BLOCK_SUB(2);
-	
-	//Touchscreen	
-	touchPosition touch;	
-	touch.px = 0;
-	touch.py = 0;
-	
+	//turn off sprites
+	initOAM();
+
+}
+
+
 //Background
-	
+
+void BackgroundGeneration(int ix, int iy)
+{	
 	REG_BG0CNT_SUB = BG_COLOR_256 | (1 << MAP_BASE_SHIFT);
 	REG_BG1CNT_SUB = BG_COLOR_256 | (2 << MAP_BASE_SHIFT);
 	
@@ -77,14 +148,95 @@ int main(void)
 			map0[(iy + 2) * 32 + ix + 3] = (ix ^ iy) & 1;
 		}		
 	}
+}
+
+
+
+
+
+
+
+
+
+
+int main(void) 
+{
+
+//Initial Functions
+
+	ScreenSetUp();
+	//vram banks are somewhat complex
 	
-	sImage ball;
+	//consoleDemoInit();
+ 
+	//Touchscreen
+/*	
+	touchPosition touch;	
+	touch.px = 0;
+	touch.py = 0;
+*/
+	
 
-	//load our ball pcx file into an image
-	loadPCX((u8*)ball_pcx, &ball);
 
-	//tile it so it is usefull as sprite data
-	imageTileData(&ball);
+	
+
+	
+	//Sprites
+	
+	//vram banks are somewhat complex
+	vramSetPrimaryBanks(VRAM_A_MAIN_BG_0x06000000, VRAM_B_MAIN_SPRITE, VRAM_C_SUB_BG, VRAM_D_SUB_SPRITE);
+
+	SpriteAdd();
+		
+	/*
+	Sprite SpriteArray[1] =
+	{
+	  //{  x,  y, dx, dy, &OAMCopySub[i], 0}
+		{30, 30, 0, 0, &OAMCopySub[0], 0}
+	};
+	
+	for (i = 0; i < 1; i++)
+	{
+		SpriteArray[i].oam->attribute[0] = ATTR0_COLOR_256 | ATTR0_SQUARE;
+		SpriteArray[i].oam->attribute[1] = ATTR1_SIZE_32;
+		SpriteArray[i].oam->attribute[2] = SpriteArray[i].gfxID;
+	}*/
+	
+	Sprite SpriteArray[] =
+	{
+		// x,  y, dx,dy, &OAMCopySub[i], 0
+		{100, 80, 0, 0, &OAMCopySub[0], 0} 
+	};
+	
+	for (i = 0; i < 1; i++)
+	{
+		SpriteArray[i].oam->attribute[0] = ATTR0_COLOR_256 | ATTR0_SQUARE;
+		SpriteArray[i].oam->attribute[1] = ATTR1_SIZE_32;
+		SpriteArray[i].oam->attribute[2] = SpriteArray[i].gfxID;
+	}
+	
+	/*
+
+	for(i = 0; i < 1; i++) {
+		//random place and speed
+		sprites[i].x = 100;
+		sprites[i].y = 80;
+		sprites[i].dx = 0;
+		sprites[i].dy = 0;
+
+		sprites[i].oam = &OAMCopySub[i];
+		sprites[i].gfxID = 0;
+
+		//set up our sprites OAM entry attributes
+		sprites[i].oam->attribute[0] = ATTR0_COLOR_256 | ATTR0_SQUARE;
+		sprites[i].oam->attribute[1] = ATTR1_SIZE_32;
+		sprites[i].oam->attribute[2] = sprites[i].gfxID;
+	}
+	*/
+	
+	//Background
+	
+	BackgroundGeneration(ix, iy);
 	
 	
 
@@ -103,7 +255,18 @@ int main(void)
 	}
 
 	while(1) 
-	{	
+	{					
+		
+		//Sprites
+		for (i = 0; i < 1; i++)
+		{
+			MoveSprite(&SpriteArray[i]);
+		}
+		
+		//scroll the background
+		REG_BG0HOFS_SUB = delta ++; // Horizontal
+		//REG_BG0VOFS_SUB = delta++; // Vertical
+		
 		swiWaitForVBlank();
 		
 		scanKeys();
@@ -114,26 +277,12 @@ int main(void)
 
 		if(held & KEY_TOUCH) 
 		{
+			//touchRead(&touch);
 
-			touchRead(&touch);
-		/*
-			if (touch.z1 != 0 ) 
-			{
-				area = touch.px * touch.z2 / touch.z1 - touch.px;
-			}
-		*/
-
-			//iprintf("\x1b[10;0HTouch x = %04i, %04i\n", touch.rawx, touch.px);
-
-			iprintf("\x1b[11;5HTouch (X,Y) = (%d,%d)       ", touch.px, touch.py);
-
-			//iprintf("Touch Area (pressure) %04i\n", area);
-
+			//iprintf("\x1b[11;5HTouch (X,Y) = (%d,%d)       ", touch.px, touch.py);
 		}
-	
-		//scroll the background
-		REG_BG0HOFS_SUB = delta ++; // Horizontal
-		//REG_BG0VOFS_SUB = delta++; // Vertical
+		
+		updateOAM();
 		
 	
 	}

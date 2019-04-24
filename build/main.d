@@ -57,7 +57,10 @@ main.o: O:/devkitPro/examples/nds/dsprogramming/source/main.c \
  O:/devkitPro/libnds/include/nds/arm9/trig_lut.h \
  O:/devkitPro/libnds/include/nds/arm9/video.h \
  O:/devkitPro/libnds/include/nds/arm9/videoGL.h \
- O:/devkitPro/libnds/include/nds/arm9/nand.h
+ O:/devkitPro/libnds/include/nds/arm9/nand.h \
+ O:/devkitPro/examples/nds/dsprogramming/build/Touch_The_Screen_pcx.h \
+ O:/devkitPro/examples/nds/dsprogramming/build/Test32by32_pcx.h \
+ O:/devkitPro/examples/nds/dsprogramming/build/ball_pcx.h
 
 O:/devkitPro/libnds/include/nds.h:
 
@@ -176,3 +179,9 @@ O:/devkitPro/libnds/include/nds/arm9/video.h:
 O:/devkitPro/libnds/include/nds/arm9/videoGL.h:
 
 O:/devkitPro/libnds/include/nds/arm9/nand.h:
+
+O:/devkitPro/examples/nds/dsprogramming/build/Touch_The_Screen_pcx.h:
+
+O:/devkitPro/examples/nds/dsprogramming/build/Test32by32_pcx.h:
+
+O:/devkitPro/examples/nds/dsprogramming/build/ball_pcx.h:
